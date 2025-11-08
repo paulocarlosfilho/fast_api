@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from datetime import datetime, timezone
 from typing import Optional 
+from pydantic import BaseModel
+
 
 app = FastAPI()
 
-# Simulação de um banco de dados
+# Simulação de um banco de dados (usa 'status': 'published' ou 'draft')
 fake_db = [
     {
         'title': 'Criando uma aplicação com Django.',
@@ -28,23 +30,43 @@ fake_db = [
     }
 ]
 
-# Rota /posts - Implementação de Paginação (skip/limit) e Filtragem (status)
-@app.get("/posts")
-def read_posts(skip: int = 0, limit: Optional[int] = None, status: Optional[str] = 'published'):
-    
-    # 1. FILTRAGEM: Cria uma lista filtrada com base no status fornecido
-    if status:
-        filtered_posts = [post for post in fake_db if post.get('status') == status]
-    else:
-        filtered_posts = fake_db
 
-    # 2. DEFINIÇÃO DO LIMITE: Se 'limit' não for fornecido, usa o tamanho da lista filtrada
-    limit_val = limit if limit is not None else len(filtered_posts)
+# Pydantic Model (usa 'published: bool')
+class Post(BaseModel):
+    title: str
+    date: datetime = datetime.now(timezone.utc)
+    published: bool = False
+    author: str = "John Doe"
+
+    
+@app.post("/post/", status_code=status.HTTP_201_CREATED)
+def create_post(post: Post):
+    # LÓGICA: Converte o booleano 'published' do Pydantic para o string 'status' do DB
+    post_data = post.model_dump()
+    post_data['status'] = 'published' if post.published else 'draft'
+    
+    # Remove a chave 'published' para evitar conflito com a estrutura do fake_db
+    del post_data['published'] 
+    
+    fake_db.append(post_data)
+    return post
+
+# Rota /posts
+@app.get("/posts")
+def read_posts(published: bool, limit: int, skip: int = 0):
+    
+    # 1. TRADUÇÃO: Traduz o parâmetro booleano (published) para a string do DB (status_str)
+    status_str = 'published' if published else 'draft'
+    
+    # 2. FILTRAGEM: Filtra usando a chave 'status' que existe no fake_db
+    filtered_posts = [
+        post for post in fake_db 
+        if post.get('status') == status_str
+    ]
     
     # 3. PAGINAÇÃO: Aplica o slicing na lista filtrada
-    return filtered_posts[skip : skip + limit_val]
-    
-# Rota /posts/{framework}
+    return filtered_posts[skip : skip + limit]
+
 @app.get("/posts/{framework}")
 async def read_framework_posts(framework: str):
     return {
