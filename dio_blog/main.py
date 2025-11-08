@@ -1,4 +1,6 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Header, status, Cookie, Response
+from typing import Annotated
+
 from datetime import datetime, timezone
 from typing import Optional 
 from pydantic import BaseModel
@@ -52,9 +54,15 @@ def create_post(post: Post):
     return post
 
 # Rota /posts
-@app.get("/posts")
-def read_posts(published: bool, limit: int, skip: int = 0):
-    
+@app.get("/posts/")
+def read_posts(
+    response: Response,
+    published: bool,
+    limit: int,
+    skip: int = 0,
+    ads_id: Annotated[str | None, Cookie()] = None,
+    user_agent: Annotated[str | None, Header()] = None
+):
     # 1. TRADUÇÃO: Traduz o parâmetro booleano (published) para a string do DB (status_str)
     status_str = 'published' if published else 'draft'
     
@@ -63,7 +71,12 @@ def read_posts(published: bool, limit: int, skip: int = 0):
         post for post in fake_db 
         if post.get('status') == status_str
     ]
+
+    response.set_cookie(key='user', value='gui.ifsp11@gmail.com')
     
+    print(f"Cookie: {ads_id}")
+    print(f"Cookie: {user_agent}")
+
     # 3. PAGINAÇÃO: Aplica o slicing na lista filtrada
     return filtered_posts[skip : skip + limit]
 
