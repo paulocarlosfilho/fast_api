@@ -1,45 +1,57 @@
 #!/bin/bash
+# ===============================================================
+# SCRIPT DE INICIALIZAÇÃO ROBUSTO COM POETRY
+# 1. Garante que o Poetry esteja instalado.
+# 2. Configura e inicia a aplicação.
+# ===============================================================
 
-# Verifica se o Poetry já está instalado
-if command -v poetry &> /dev/null
-then
-    echo "Poetry já está instalado."
-else
-    echo "Instalando Poetry..."
-    # Instala o Poetry (método oficial para Linux/WSL)
+PYTHON_SCRIPT="desafios/desafio_v1/desafio_v1.py"
+POETRY_BIN="$HOME/.local/bin/poetry"
+
+echo "--- 1. VERIFICANDO INSTALAÇÃO DO POETRY ---"
+
+# Verifica se o executável do Poetry existe
+if [ ! -f "$POETRY_BIN" ]; then
+    echo "Poetry não encontrado. Instalando..."
+    
+    # Executando o curl para instalar o Poetry
+    sudo apt update
+    sudo apt install curl
+    
+    # Executa o instalador oficial do Poetry
     curl -sSL https://install.python-poetry.org | python3 -
     
-    # Adiciona o diretório binário do Poetry ao PATH (necessário para rodar o poetry)
-    if [[ ":$PATH:" != *":$POETRY_BIN:"* ]]; then
-        export PATH="$POETRY_BIN:$PATH"
-        echo "PATH atualizado para incluir o binário do Poetry."
-    fi
+    # O instalador do Poetry NÃO adiciona o binário ao PATH automaticamente.
+    # É preciso recarregar o shell ou adicioná-lo manualmente.
 fi
 
-# Verifica a instalação
-poetry --version || { echo "❌ Falha na instalação do Poetry. Abortando."; exit 1; }
+# Garante que o diretório do Poetry esteja no PATH para a sessão atual do script
+export PATH="$HOME/.local/bin:$PATH"
 
-echo "--- 2. Instalação de Dependências com Poetry ---"
+# Verifica se o comando 'poetry' agora está disponível
+if ! command -v poetry &> /dev/null
+then
+    echo "ERRO: A instalação do Poetry falhou ou o PATH não foi configurado corretamente."
+    exit 1
+fi
 
-# Cria o ambiente virtual e instala as dependências
+echo "--- 2. CONFIGURANDO AMBIENTE E DEPENDÊNCIAS (VIA POETRY) ---"
 
-# Usamos `poetry add` para garantir que `pyproject.toml` e `poetry.lock` sejam criados/atualizados
-poetry add fastapi uvicorn
-echo "FastAPI e Uvicorn adicionados e instalados."
+# Instala o projeto e todas as dependências do pyproject.toml
+poetry install 
 
-# echo "--- 3. Configuração do Git e Commit ---"
+echo "--- 3. INICIANDO APLICAÇÃO PYTHON"
+echo "---------------------------------------------------"
 
-# Configura o helper de credenciais (se não estiver globalmente)
-# git config --global credential.helper store
 
-# git config --global user.email # Ou algo assim
-# git config --global user.user
+# Abir a pasta.
 
-# Adiciona todos os arquivos (incluindo as mudanças do Poetry)
-git add .
-echo "Todos os arquivos adicionados, incluindo as mudanças do Poetry."
+# Usar o wsl para entrar no ubuntu.
 
-# Renomeia o branch local para 'main'
-git branch -M main
-echo "Branch local renomeado para 'main'."
+# usar o o poetry init
 
+# usar o poetry env activate
+
+# copiar o source e colar no terminal
+
+#Comece a trabalhar
