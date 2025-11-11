@@ -55,3 +55,8 @@ echo "---------------------------------------------------"
 # copiar o source e colar no terminal
 
 #Comece a trabalhar
+
+# poetry add fastapi uvicorn
+
+# Para iniciar o projeto no fastapi
+uvicorn main:app --reload
