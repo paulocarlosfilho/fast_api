@@ -1,12 +1,13 @@
-from fastapi import Header, status, Cookie, Response
-from typing import Annotated
+from fastapi import Header, status, Cookie, Response, APIRouter
+from typing import Annotated, List
 
 from datetime import datetime, timezone
 
 from schemas.post import Foo, PostIn
 from views.post import PostOut
 
-from main import app
+
+router = APIRouter()
 
 fake_db = [
     {
@@ -32,7 +33,7 @@ fake_db = [
 ]
 
 
-@app.post("/post/", status_code=status.HTTP_201_CREATED, response_model=PostIn)
+@router.post("/post/", status_code=status.HTTP_201_CREATED, response_model=PostIn)
 def create_post(post: PostIn):
     # LÓGICA: Converte o booleano 'published'
     #  do Pydantic para o string 'status' do DB
@@ -47,7 +48,7 @@ def create_post(post: PostIn):
 
 
 # Rota /posts
-@app.get("/posts/", response_model=list(PostOut))
+@router.get("/posts/", response_model=List[PostOut])
 def read_posts(
     response: Response,
     published: bool,
@@ -73,7 +74,7 @@ def read_posts(
     return filtered_posts[skip: skip + limit]
 
 
-@app.get("/posts/{framework}", reponse_model=PostIn)
+@router.get("/posts/{framework}", response_model=dict)
 async def read_framework_posts(framework: str):
     return {
         "posts": [
@@ -90,12 +91,12 @@ async def read_framework_posts(framework: str):
 
 
 # Foobar - usando o dict
-@app.get("/foobar/", response_model=Foo)
-def foobar() -> dict[str, str]:
+@router.get("/foobar/", response_model=Foo)
+def foobar() -> Foo:
     return {"bar": "foo", "mensagem": "Azul"}
 
 
 # Rota /items/{item_id}
-@app.get("/items/{item_id}")
+@router.get("/items/{item_id}")
 async def read_item(item_id: int, q: str = None):
     return {"item_id": item_id, "q": q}
